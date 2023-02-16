@@ -14,6 +14,7 @@ resource "aws_key_pair" "MonSrv" {
 
 # création de l'instance
 resource "aws_instance" "MonSrv" {
+    key_name = aws_key_pair.MonSrv.key_name
     ami = var.AWS_AMI
     instance_type = "t2.micro"
     vpc_security_group_ids = [ aws_security_group.instance_sg.id ]
@@ -22,6 +23,16 @@ resource "aws_instance" "MonSrv" {
       user = "ec2-user"
       private_key = file("/Users/macos/.ssh/id_rsa")
       host = self.public_ip
+    }
+    provisioner "remote-exec" {
+        inline = [
+          "sudo yum -f -y update",
+          "sudo yum install httpd -y",
+          "sudo firewall-cmd --permanent --add-service=http",
+          "sudo systemctl start httpd.service",
+          "sudo systemctl enable httpd.service",
+          "sudo sh -c 'echo \"<h1>Hello famille DevOps</h1>\" > /var/www/html/index.html'",
+        ]
     }
     #user_data = <<-EOF
         #!/bin/bash
@@ -60,17 +71,4 @@ resource "aws_security_group" "instance_sg" {
 output "Ip_pub" {
     value = aws_instance.MonSrv.public_ip
   
-}
-
-provisioner "remote_exec" {
-    inline = [
-     "sudo yum update",
-     "sudo yum install -y httpd",
-     "sudo firewall-cmd --permanent --add-service=http",
-     "sudo firewall-cmd --reload",
-     "sudo systemctl start httpd.service",
-     "sudo systemctl enable httpd.service",
-     "sudo sh -c 'echo  <html><h1>Hello famille devops</h1></html> > var/www/html/index.html'"
-    ]
-
 }
