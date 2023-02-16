@@ -5,22 +5,34 @@ provider "aws" {
     secret_key = var.AWS_SECRET_KEY
   
 }
+# setup key-pair
+resource "aws_key_pair" "MonSrv" {
+    key_name = "terraform-key"
+    public_key = file("/Users/macos/.ssh/id_rsa.pub")
+  
+}
 
 # création de l'instance
 resource "aws_instance" "MonSrv" {
     ami = var.AWS_AMI
     instance_type = "t2.micro"
     vpc_security_group_ids = [ aws_security_group.instance_sg.id ]
-    user_data = <<-EOF
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      private_key = file("/Users/macos/.ssh/id_rsa")
+      host = self.public_ip
+    }
+    #user_data = <<-EOF
         #!/bin/bash
-        sudo yum update
-        sudo yum install -y httpd
-        sudo firewall-cmd --permanent --add-service=http
-        sudo firewall-cmd --reload
-        sudo systemctl start httpd.service
-        sudo systemctl enable httpd.service
-        sudo echo "<html><h1>Hello famille devops</h1></html>" > /var/www/html/index.html
-    EOF
+    #    sudo yum update
+     #   sudo yum install -y httpd
+      #  sudo firewall-cmd --permanent --add-service=http
+      #  sudo firewall-cmd --reload
+      #  sudo systemctl start httpd.service
+      #  sudo systemctl enable httpd.service
+      #  sudo echo "<html><h1>Hello famille devops</h1></html>" > /var/www/html/index.html
+    #EOF
     tags = {
       Name = "terraform-test"
     }
@@ -48,4 +60,17 @@ resource "aws_security_group" "instance_sg" {
 output "Ip_pub" {
     value = aws_instance.MonSrv.public_ip
   
+}
+
+provisioner "remote_exec" {
+    inline = [
+     "sudo yum update",
+     "sudo yum install -y httpd",
+     "sudo firewall-cmd --permanent --add-service=http",
+     "sudo firewall-cmd --reload",
+     "sudo systemctl start httpd.service",
+     "sudo systemctl enable httpd.service",
+     "sudo sh -c 'echo  <html><h1>Hello famille devops</h1></html> > var/www/html/index.html'"
+    ]
+
 }
