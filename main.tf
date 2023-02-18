@@ -72,3 +72,12 @@ output "Ip_pub" {
     value = aws_instance.MonSrv.public_ip
   
 }
+
+terraform {
+  backend "s3" {
+    bucket = "terraform-devopstest"
+    key = "state/terraform.state"
+    region = "us-east-1"
+    
+  }
+}
