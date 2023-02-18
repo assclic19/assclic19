@@ -1,4 +1,4 @@
-# setup le provisionneur
+# setup le provider
 provider "aws" {
     region = var.AWS_REGION
     access_key = var.AWS_ACCESS_KEY
@@ -8,7 +8,7 @@ provider "aws" {
 # setup key-pair
 resource "aws_key_pair" "MonSrv" {
     key_name = "terraform-key"
-    public_key = file("/Users/macos/.ssh/id_rsa.pub")
+    public_key = file("./terraform-key.pub")
   
 }
 
@@ -21,7 +21,7 @@ resource "aws_instance" "MonSrv" {
     connection {
       type = "ssh"
       user = "ec2-user"
-      private_key = file("/Users/macos/.ssh/id_rsa")
+      private_key = file("./terraform-key")
       host = self.public_ip
     }
     provisioner "remote-exec" {
